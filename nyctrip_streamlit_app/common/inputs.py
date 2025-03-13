@@ -13,18 +13,33 @@ def input_database_form(session: Session):
             st.session_state.input_db = input_db
             st.session_state.input_tbl = None
         
+def input_schema_form(session: Session, input_db: str):
+    with st.form("Select_Schema"):
+        schemas_df = session.sql(f"SHOW SCHEMAS IN DATABASE {input_db}").collect()
+        schemas = [schema["name"] for schema in schemas_df]
 
-def input_table_form(session: Session, input_db: str): 
+        if len(schemas) > 0:
+            input_schema = st.selectbox("Schema:", schemas, index=None, placeholder="Select a schema.")
+            submitted = st.form_submit_button("Submit")
+        else:
+            submitted = False
 
+        if submitted:
+            st.write(f"Selected schema is {input_schema}")
+            st.session_state.input_schema = f"{input_db}.{input_schema}"
+
+def input_table_form(session: Session, input_schema: str): 
     with st.form("Select_Table"):
-        tables_df = session.sql(f"SHOW TABLES IN SCHEMA {input_db}.PUBLIC").collect()
+        tables_df = session.sql(f"SHOW TABLES IN SCHEMA {input_schema}").collect()
         tables = [table["name"] for table in tables_df]
 
         if len(tables) > 0:
             input_table = st.selectbox("Table:", tables, index=None, placeholder="Select a table.")
             submitted = st.form_submit_button("Submit")
+        else:
+            submitted = False
 
         if submitted:
             st.write(f"Selected table is {input_table}")
-            st.session_state.input_tbl = f"{input_db}.PUBLIC.{input_table}"
+            st.session_state.input_tbl = f"{input_schema}.{input_table}"
 
